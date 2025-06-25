@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Unique Voice Chat</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>My Friends' Voice Chat</h1>
+        <div id="login">
+            <input type="text" id="nickname" placeholder="Enter your nickname" required>
+            <input type="password" id="password" placeholder="Enter password" required>
+            <button onclick="joinChat()">Join Chat</button>
+        </div>
+        <div id="chat" style="display:none;">
+            <h2>Voice Chat Room</h2>
+            <div id="users">Connected users: </div>
+            <div class="controls">
+                <button id="micButton" onclick="toggleMic()">Mute</button>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1" oninput="adjustVolume()">
+                <label for="volumeSlider">Volume</label>
+            </div>
+            <div id="status"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
