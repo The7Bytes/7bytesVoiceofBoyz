@@ -6,14 +6,14 @@ const clients = new Map(); // Track active clients with their room IDs
 
 wss.on("connection", (ws) => {
   console.log("New client connected");
-  let clientRoomId = null;
+  let clientRoomId = null; // Track roomId per connection
 
   ws.on("message", (message) => {
     try {
       const data = JSON.parse(message);
       const { roomId, type, payload, password } = data;
 
-      const sharedPassword = "myfriends123";
+      const sharedPassword = "myfriends123"; // Must match client-side
       if (password !== sharedPassword) {
         ws.send(JSON.stringify({ type: "error", payload: "Incorrect password" }));
         ws.close();
@@ -25,13 +25,14 @@ wss.on("connection", (ws) => {
       clientRoomId = roomId;
       clients.set(ws, { roomId: clientRoomId, nickname: payload.nickname });
 
-      // Notify other clients
+      // Notify other clients in the room
       rooms[roomId].forEach((client) => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({ type: "user-joined", payload: payload }));
         }
       });
 
+      // Relay WebRTC signaling messages
       if (type === "offer" || type === "answer" || type === "ice-candidate") {
         rooms[roomId].forEach((client) => {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -58,6 +59,7 @@ wss.on("connection", (ws) => {
           delete rooms[clientRoomId];
           console.log(`Room ${clientRoomId} deleted`);
         } else {
+          // Notify remaining clients of the disconnection
           rooms[clientRoomId].forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({ type: "user-left", payload: { nickname: clientData.nickname } }));
@@ -84,7 +86,7 @@ wss.on("connection", (ws) => {
       ws.ping();
       console.log("Sent ping to client");
     }
-  }, 240000);
-});
+  }, 240000); // Every 4 minutes
+}); // Closing brace for wss.on("connection")
 
 console.log("WebSocket server running on port", process.env.PORT || 10000);
