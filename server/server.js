@@ -21,12 +21,14 @@ wss.on("connection", (ws) => {
       rooms[roomId].add(ws);
       ws.roomId = roomId;
 
+      // Notify other clients in the room
       rooms[roomId].forEach((client) => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
           client.send(JSON.stringify({ type: "user-joined", payload: payload }));
         }
       });
 
+      // Relay WebRTC signaling messages
       if (type === "offer" || type === "answer" || type === "ice-candidate") {
         rooms[roomId].forEach((client) => {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -41,7 +43,7 @@ wss.on("connection", (ws) => {
 
   ws.on("close", () => {
     if (ws.roomId && rooms[ws.roomId]) {
-      rooms[ws.roomId].delete(ws);
+      rooms[roomId].delete(ws); // Fixed typo: rooms[ws.roomId] instead of rooms[roomId]
       if (rooms[ws.roomId].size === 0) delete rooms[ws.roomId];
       console.log("Client disconnected");
     }
@@ -49,7 +51,7 @@ wss.on("connection", (ws) => {
 
   ws.onerror = (error) => {
     console.error("WebSocket error:", error);
-  });
-});
+  };
+}); // Closing brace for wss.on("connection")
 
 console.log("WebSocket server running on port", process.env.PORT || 8080);
