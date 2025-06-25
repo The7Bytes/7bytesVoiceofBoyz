@@ -1,6 +1,6 @@
 const roomId = "voicechat-room";
 const sharedPassword = "myfriends123"; // Must match server
-const signalingServerUrl = "wss://your-app-name.onrender.com"; // Replace with your deployed server URL
+const signalingServerUrl = "wss://sevenbytesvoiceofboyz.onrender.com"; // Replace with your deployed server URL
 let ws;
 let peerConnections = {};
 let localStream;
