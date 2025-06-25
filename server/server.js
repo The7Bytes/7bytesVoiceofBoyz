@@ -5,6 +5,7 @@ const rooms = {};
 
 wss.on("connection", (ws) => {
   console.log("New client connected");
+  let clientRoomId = null; // Track roomId per connection
 
   ws.on("message", (message) => {
     try {
@@ -19,7 +20,7 @@ wss.on("connection", (ws) => {
 
       if (!rooms[roomId]) rooms[roomId] = new Set();
       rooms[roomId].add(ws);
-      ws.roomId = roomId; // Assign roomId to the WebSocket instance
+      clientRoomId = roomId; // Assign roomId to this connection
 
       // Notify other clients in the room
       rooms[roomId].forEach((client) => {
@@ -43,10 +44,20 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
-    if (ws.roomId && rooms[ws.roomId]) { // Use ws.roomId instead of roomId
-      rooms[ws.roomId].delete(ws);
-      if (rooms[ws.roomId].size === 0) delete rooms[ws.roomId];
-      console.log("Client disconnected from room:", ws.roomId);
+    if (clientRoomId && rooms[clientRoomId]) {
+      rooms[clientRoomId].delete(ws);
+      console.log(`Client disconnected from room: ${clientRoomId}`);
+      if (rooms[clientRoomId].size === 0) {
+        delete rooms[clientRoomId];
+        console.log(`Room ${clientRoomId} deleted`);
+      } else {
+        // Notify remaining clients of the disconnection
+        rooms[clientRoomId].forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: "user-left", payload: { nickname: ws.nickname || "Unknown" } }));
+          }
+        });
+      }
     } else {
       console.log("Client disconnected, no room assigned");
     }
@@ -54,7 +65,18 @@ wss.on("connection", (ws) => {
 
   ws.onerror = (error) => {
     console.error("WebSocket error:", error);
-  };
+    if (clientRoomId && rooms[clientRoomId]) {
+      rooms[clientRoomId].delete(ws);
+    }
+  });
+
+  // Optional keep-alive to prevent Render sleep
+  setInterval(() => {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.ping(); // Send WebSocket ping to keep connection alive
+      console.log("Sent ping to client");
+    }
+  }, 240000); // Every 4 minutes
 });
 
 console.log("WebSocket server running on port", process.env.PORT || 10000);
